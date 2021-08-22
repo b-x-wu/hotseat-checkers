@@ -55,5 +55,13 @@ ol, ul {
 }
 
 .black {
-  background-color: black;
+  background-color: gray;
+}
+
+.red-piece {
+  color: red;
+}
+
+.black-piece {
+  color: black;
 }
