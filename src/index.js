@@ -4,7 +4,11 @@ import './index.css';
 
 function Square(props) {
   return (
-    <button className={"square " + props.color + props.pieceColor}>
+    <button 
+      className={"square " + props.color + props.pieceColor}
+      id={props.id}
+      onClick={props.onClick}
+    >
       {props.piece}
     </button>
   );
@@ -25,6 +29,28 @@ class Board extends React.Component {
         ret[7] = Array(4).fill('B');
         return ret;
       })(),
+      selected: null
+    }
+  }
+
+  // NOTE: a checker's square is white iff when it is
+  // in the ith row and jth column, i and j are both odd,
+  // that is i - j % 2 === 0
+
+  handleClick(i, j) {
+    if (this.state.selected) {
+      // there's already a piece selected
+      // if the user clicked the same piece, deselect it
+      if (i === this.state.selected[0] & j === this.state.selected[1]) {
+        this.setState({selected: null});
+      }
+    } else {
+      if ((i - j) % 2 === 0) {
+        // the square is white
+        return;
+      } else if (this.state.pieces[i][Math.floor(j / 2)]) {
+        this.setState({selected: [i, j]});
+      }
     }
   }
 
@@ -35,17 +61,45 @@ class Board extends React.Component {
       if (i % 2 === 0) {
         for (let j = 0; j < 8; j++) {
           if (j % 2 === 0) {
-            rows[i].push(<Square key={i + "," + j} color="white" pieceColor="" piece=""/>);
+            rows[i].push(<Square 
+              key={i + "," + j} 
+              color="white" 
+              pieceColor="" 
+              piece=""
+              onClick={() => this.handleClick(i, j)}
+              id=""
+            />);
           } else {
-            rows[i].push(<Square key={i + "," + j} color="black" pieceColor="" piece=""/>);
+            rows[i].push(<Square 
+              key={i + "," + j} 
+              color="black" 
+              pieceColor="" 
+              piece=""
+              onClick={() => this.handleClick(i, j)}
+              id=""
+            />);
           }
         }
       } else {
         for (let j = 0; j < 8; j++) {
           if (j % 2 === 0) {
-            rows[i].push(<Square key={i + "," + j} color="black" pieceColor="" piece=""/>);
+            rows[i].push(<Square 
+              key={i + "," + j} 
+              color="black" 
+              pieceColor="" 
+              piece=""
+              onClick={() => this.handleClick(i, j)}
+              id=""
+            />);
           } else {
-            rows[i].push(<Square key={i + "," + j} color="white" pieceColor="" piece=""/>);
+            rows[i].push(<Square 
+              key={i + "," + j} 
+              color="white" 
+              pieceColor="" 
+              piece=""
+              onClick={() => this.handleClick(i, j)}
+              id=""
+            />);
           }
         }
       }
@@ -91,7 +145,15 @@ class Board extends React.Component {
           }
         }
       }
+    }
 
+    if (this.state.selected) {
+      rows[this.state.selected[0]][this.state.selected[1]] = React.cloneElement(
+        rows[this.state.selected[0]][this.state.selected[1]],
+        {
+          id: "selected"
+        }
+      )
     }
 
     rows = rows.map((x, idx) => (<div key={idx} className="board-row">{x}</div>));

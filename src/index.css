@@ -65,3 +65,7 @@ ol, ul {
 .black-piece {
   color: black;
 }
+
+#selected {
+  border: 5px solid yellow;
+}
