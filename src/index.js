@@ -34,7 +34,8 @@ class Board extends React.Component {
         return ret;
       })(),
       selected: null,
-      doubleJumping: false
+      doubleJumping: false,
+      turn: 'B'
     }
   }
 
@@ -42,9 +43,10 @@ class Board extends React.Component {
   // in the ith row and jth column, i and j are both odd,
   // that is i - j % 2 === 0
 
-  jumpToEmptySquare(i, j) { // TODO: no kings yet, only for black
+  jumpToEmptySquare(i, j) { // TODO: no kings yet
+    let dir = this.state.turn === "B" ? -1 : 1;
     if (!((i - j) % 2 === 0) & !this.state.pieces[i][Math.floor(j / 2)]) {
-      if (this.state.selected[0] - 1 === i & (
+      if (this.state.selected[0] + dir === i & (
         (this.state.selected[1] - 1 === j) || 
         (this.state.selected[1] + 1 === j)
       )) {
@@ -55,24 +57,25 @@ class Board extends React.Component {
     return false;
   }
 
-  jumpOverPiece(i, j) { // TODO: only for black
+  jumpOverPiece(i, j) {
+    let dir = this.state.turn === "B" ? -1 : 1;
 
-    if (!((i - j) % 2 === 0) & !this.state.pieces[i][Math.floor(j / 2)] & i === this.state.selected[0] - 2) {
+    if (!((i - j) % 2 === 0) & !this.state.pieces[i][Math.floor(j / 2)] & i === this.state.selected[0] + (2 * dir)) {
       let piece = this.state.pieces[this.state.selected[0]][Math.floor(this.state.selected[1] / 2)];
       let other_piece = piece === 'B' ? 'R' : 'B';
-      if (j === this.state.selected[1] + 2 & this.state.pieces[i + 1][Math.floor((j - 1) / 2)] === other_piece) {
-        return [i + 1, j - 1];
-      } else if (j === this.state.selected[1] - 2 & this.state.pieces[i + 1][Math.floor((j + 1) / 2)] === other_piece) {
-        return [i + 1, j + 1];
+      if (j === this.state.selected[1] + 2 & this.state.pieces[i - dir][Math.floor((j - 1) / 2)] === other_piece) {
+        return [i - dir, j - 1];
+      } else if (j === this.state.selected[1] - 2 & this.state.pieces[i - dir][Math.floor((j + 1) / 2)] === other_piece) {
+        return [i - dir, j + 1];
       }
       return null;
     }
     return null
   }
 
-  canJumpOverPiece() { // TODO: only for black
+  canJumpOverPiece() {
 
-    console.log('Checking canJumpOverPiece')
+    let dir = this.state.turn === "B" ? -1 : 1;
 
     let i = this.state.selected[0];
     let j = this.state.selected[1];
@@ -83,11 +86,9 @@ class Board extends React.Component {
 
     let piece = this.state.pieces[i][Math.floor(j / 2)];
     let other_piece = piece === 'B' ? 'R' : 'B';
-    console.log('piece: ' + piece);
-    console.log('other_piece: ' + other_piece);
 
-    let canJumpOverLeftPiece = this.state.pieces[i - 1][Math.floor((j - 1) / 2)] === other_piece & this.state.pieces[i - 2][Math.floor((j - 2) / 2)] === null;
-    let canJumpOverRightPiece = this.state.pieces[i - 1][Math.floor((j + 1) / 2)] === other_piece & this.state.pieces[i - 2][Math.floor((j + 2) / 2)] === null;
+    let canJumpOverLeftPiece = this.state.pieces[i + dir][Math.floor((j - 1) / 2)] === other_piece & this.state.pieces[i + (2 * dir)][Math.floor((j - 2) / 2)] === null;
+    let canJumpOverRightPiece = this.state.pieces[i + dir][Math.floor((j + 1) / 2)] === other_piece & this.state.pieces[i + (2 * dir)][Math.floor((j + 2) / 2)] === null;
   
     return canJumpOverLeftPiece || canJumpOverRightPiece;
 
@@ -100,9 +101,14 @@ class Board extends React.Component {
       // if the user clicked the same piece, deselect it
       if (i === this.state.selected[0] & j === this.state.selected[1]) {
         this.setState({
-          selected: null,
-          doubleJumping: false
+          selected: null
         });
+        if (this.state.doubleJumping) {
+          this.setState({
+            doubleJumping: false,
+            turn: this.state.turn === "B" ? "R" : "B"
+          })
+        }
       } else if (this.jumpToEmptySquare(i, j) & !this.state.doubleJumping) {
         
         let pieces = this.state.pieces.slice();
@@ -114,7 +120,8 @@ class Board extends React.Component {
 
         this.setState({
           pieces: pieces,
-          selected: null
+          selected: null,
+          turn: this.state.turn === "B" ? "R" : "B"
         });
 
       } else if (this.jumpOverPiece(i, j)) {
@@ -140,7 +147,8 @@ class Board extends React.Component {
           } else {
             this.setState({
               selected: null,
-              doubleJumping: false
+              doubleJumping: false,
+              turn: this.state.turn === "B" ? "R" : "B"
             })
           }
         });
@@ -150,7 +158,7 @@ class Board extends React.Component {
       if ((i - j) % 2 === 0) {
         // the square is white
         return;
-      } else if (this.state.pieces[i][Math.floor(j / 2)]) {
+      } else if (this.state.pieces[i][Math.floor(j / 2)] === this.state.turn) {
         this.setState({selected: [i, j]});
       }
     }
@@ -263,6 +271,9 @@ class Board extends React.Component {
     return (
       <div>
         {rows}
+        <p>
+          {this.state.turn === "B" ? "Black Turn" : "Red Turn"}
+        </p>
       </div>
     )
   }
