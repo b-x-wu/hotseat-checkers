@@ -27,9 +27,14 @@ class Board extends React.Component {
         ret[5] = Array(4).fill('B');
         ret[6] = Array(4).fill('B');
         ret[7] = Array(4).fill('B');
+
+        // ret[2] = [null, null, 'R', null];
+        // ret[4] = [null, null, 'R', null];
+
         return ret;
       })(),
-      selected: null
+      selected: null,
+      doubleJumping: false
     }
   }
 
@@ -37,12 +42,109 @@ class Board extends React.Component {
   // in the ith row and jth column, i and j are both odd,
   // that is i - j % 2 === 0
 
+  jumpToEmptySquare(i, j) { // TODO: no kings yet, only for black
+    if (!((i - j) % 2 === 0) & !this.state.pieces[i][Math.floor(j / 2)]) {
+      if (this.state.selected[0] - 1 === i & (
+        (this.state.selected[1] - 1 === j) || 
+        (this.state.selected[1] + 1 === j)
+      )) {
+        return true;
+      }
+      return false;
+    }
+    return false;
+  }
+
+  jumpOverPiece(i, j) { // TODO: only for black
+
+    if (!((i - j) % 2 === 0) & !this.state.pieces[i][Math.floor(j / 2)] & i === this.state.selected[0] - 2) {
+      let piece = this.state.pieces[this.state.selected[0]][Math.floor(this.state.selected[1] / 2)];
+      let other_piece = piece === 'B' ? 'R' : 'B';
+      if (j === this.state.selected[1] + 2 & this.state.pieces[i + 1][Math.floor((j - 1) / 2)] === other_piece) {
+        return [i + 1, j - 1];
+      } else if (j === this.state.selected[1] - 2 & this.state.pieces[i + 1][Math.floor((j + 1) / 2)] === other_piece) {
+        return [i + 1, j + 1];
+      }
+      return null;
+    }
+    return null
+  }
+
+  canJumpOverPiece() { // TODO: only for black
+
+    console.log('Checking canJumpOverPiece')
+
+    let i = this.state.selected[0];
+    let j = this.state.selected[1];
+
+    if ([0, 1].includes(i)) {
+      return false;
+    }
+
+    let piece = this.state.pieces[i][Math.floor(j / 2)];
+    let other_piece = piece === 'B' ? 'R' : 'B';
+    console.log('piece: ' + piece);
+    console.log('other_piece: ' + other_piece);
+
+    let canJumpOverLeftPiece = this.state.pieces[i - 1][Math.floor((j - 1) / 2)] === other_piece & this.state.pieces[i - 2][Math.floor((j - 2) / 2)] === null;
+    let canJumpOverRightPiece = this.state.pieces[i - 1][Math.floor((j + 1) / 2)] === other_piece & this.state.pieces[i - 2][Math.floor((j + 2) / 2)] === null;
+  
+    return canJumpOverLeftPiece || canJumpOverRightPiece;
+
+  }
+
   handleClick(i, j) {
+    
     if (this.state.selected) {
       // there's already a piece selected
       // if the user clicked the same piece, deselect it
       if (i === this.state.selected[0] & j === this.state.selected[1]) {
-        this.setState({selected: null});
+        this.setState({
+          selected: null,
+          doubleJumping: false
+        });
+      } else if (this.jumpToEmptySquare(i, j) & !this.state.doubleJumping) {
+        
+        let pieces = this.state.pieces.slice();
+        let piece = pieces[this.state.selected[0]][Math.floor(this.state.selected[1] / 2)]
+        pieces[this.state.selected[0]][Math.floor(this.state.selected[1] / 2)] = null;
+        let row = pieces[i].slice();
+        row[Math.floor(j / 2)] = piece;
+        pieces[i] = row;
+
+        this.setState({
+          pieces: pieces,
+          selected: null
+        });
+
+      } else if (this.jumpOverPiece(i, j)) {
+
+        let jumpedOverPiece = this.jumpOverPiece(i, j);
+        let pieces = this.state.pieces.slice();
+        let piece = pieces[this.state.selected[0]][Math.floor(this.state.selected[1] / 2)];
+        pieces[this.state.selected[0]][Math.floor(this.state.selected[1] / 2)] = null;
+        let row = pieces[i].slice();
+        row[Math.floor(j / 2)] = piece;
+        pieces[i] = row;
+        pieces[jumpedOverPiece[0]][Math.floor(jumpedOverPiece[1] / 2)] = null;
+
+        this.setState({
+          pieces: pieces,
+          selected: [i, j]
+        }, () => {
+          if (this.canJumpOverPiece()) {
+            this.setState({
+              selected: [i, j],
+              doubleJumping: true
+            });
+          } else {
+            this.setState({
+              selected: null,
+              doubleJumping: false
+            })
+          }
+        });
+
       }
     } else {
       if ((i - j) % 2 === 0) {
