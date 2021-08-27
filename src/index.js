@@ -21,18 +21,12 @@ class Board extends React.Component {
     this.state = {
       pieces: (() => {
         let ret = Array(8).fill(Array(4).fill(null));
-        // ret[0] = Array(4).fill('R');
-        // ret[1] = Array(4).fill('R');
-        // ret[2] = Array(4).fill('R');
-        // ret[5] = Array(4).fill('B');
-        // ret[6] = Array(4).fill('B');
-        // ret[7] = Array(4).fill('B');
-
-        // ret[2] = [null, null, 'R', null];
-        // ret[4] = [null, null, 'R', null];
-        ret[1] = [null, 'R', 'R', null];
-        ret[3] = [null, 'R', 'R', null];
-        ret[4] = [null, 'B', null, null];
+        ret[0] = Array(4).fill('R');
+        ret[1] = Array(4).fill('R');
+        ret[2] = Array(4).fill('R');
+        ret[5] = Array(4).fill('B');
+        ret[6] = Array(4).fill('B');
+        ret[7] = Array(4).fill('B');
 
         return ret;
       })(),
@@ -44,10 +38,6 @@ class Board extends React.Component {
     }
   }
 
-  // NOTE: a checker's square is white iff when it is
-  // in the ith row and jth column, i and j are both odd,
-  // that is i - j % 2 === 0
-
   isKing(i, j) {
     for (let n = 0; n < this.state.kings.length; n++) {
       if (i === this.state.kings[n][0] & j === this.state.kings[n][1]) {
@@ -57,7 +47,7 @@ class Board extends React.Component {
     return -1;
   }
 
-  jumpToEmptySquare(i, j) { // TODO: no kings yet
+  jumpToEmptySquare(i, j) {
     let dir = this.state.turn === "B" ? -1 : 1;
     if (!((i - j) % 2 === 0) & !this.state.pieces[i][Math.floor(j / 2)]) {
       if (this.state.selected[0] + dir === i & (
@@ -369,6 +359,7 @@ class Board extends React.Component {
           {status}
         </p>
       </div>
+      // TODO: add restart button
     )
   }
 }
