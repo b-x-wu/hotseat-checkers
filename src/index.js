@@ -39,7 +39,8 @@ class Board extends React.Component {
       selected: null,
       doubleJumping: false,
       turn: 'B',
-      kings: []
+      kings: [],
+      winner: null
     }
   }
 
@@ -138,7 +139,26 @@ class Board extends React.Component {
       }
     }
     return false;
+  }
 
+  checkWinner() {
+    let pieces = [];
+    for (let i = 0; i < this.state.pieces.length; i++) {
+      for (let j = 0; j < this.state.pieces[i].length; j++) {
+        if (!pieces.includes(this.state.pieces[i][j])) {
+          pieces.push(this.state.pieces[i][j]);
+        }
+        if (pieces.length > 2) {
+          return null;
+        }
+      }
+    }
+    const i = pieces.indexOf(null);
+    pieces.splice(i, 1);
+    this.setState({
+      winner: pieces[0]
+    });
+    return pieces[0];
   }
 
   handleClick(i, j) {
@@ -218,6 +238,7 @@ class Board extends React.Component {
               turn: this.state.turn === "B" ? "R" : "B"
             })
           }
+          this.checkWinner();
         });
 
       }
@@ -334,12 +355,18 @@ class Board extends React.Component {
     }
 
     rows = rows.map((x, idx) => (<div key={idx} className="board-row">{x}</div>));
+    let status;
+    if (this.state.winner) {
+      status = this.state.winner === "B" ? "Black wins!" : "Red wins!";
+    } else {
+      status = this.state.turn === "B" ? "Black Turn" : "Red Turn";
+    }
 
     return (
       <div>
         {rows}
         <p>
-          {this.state.turn === "B" ? "Black Turn" : "Red Turn"}
+          {status}
         </p>
       </div>
     )
