@@ -21,27 +21,40 @@ class Board extends React.Component {
     this.state = {
       pieces: (() => {
         let ret = Array(8).fill(Array(4).fill(null));
-        ret[0] = Array(4).fill('R');
-        ret[1] = Array(4).fill('R');
-        ret[2] = Array(4).fill('R');
-        ret[5] = Array(4).fill('B');
-        ret[6] = Array(4).fill('B');
-        ret[7] = Array(4).fill('B');
+        // ret[0] = Array(4).fill('R');
+        // ret[1] = Array(4).fill('R');
+        // ret[2] = Array(4).fill('R');
+        // ret[5] = Array(4).fill('B');
+        // ret[6] = Array(4).fill('B');
+        // ret[7] = Array(4).fill('B');
 
         // ret[2] = [null, null, 'R', null];
         // ret[4] = [null, null, 'R', null];
+        ret[1] = [null, 'R', 'R', null];
+        ret[3] = [null, 'R', 'R', null];
+        ret[4] = [null, 'B', null, null];
 
         return ret;
       })(),
       selected: null,
       doubleJumping: false,
-      turn: 'B'
+      turn: 'B',
+      kings: []
     }
   }
 
   // NOTE: a checker's square is white iff when it is
   // in the ith row and jth column, i and j are both odd,
   // that is i - j % 2 === 0
+
+  isKing(i, j) {
+    for (let n = 0; n < this.state.kings.length; n++) {
+      if (i === this.state.kings[n][0] & j === this.state.kings[n][1]) {
+        return n;
+      }
+    }
+    return -1;
+  }
 
   jumpToEmptySquare(i, j) { // TODO: no kings yet
     let dir = this.state.turn === "B" ? -1 : 1;
@@ -51,7 +64,14 @@ class Board extends React.Component {
         (this.state.selected[1] + 1 === j)
       )) {
         return true;
+      } else if (this.isKing(this.state.selected[0], Math.floor(this.state.selected[1] / 2) !== -1) & 
+        (this.state.selected[0] - dir === i & (
+        (this.state.selected[1] - 1 === j) || 
+        (this.state.selected[1] + 1 === j)
+      ))) {
+        return true;
       }
+
       return false;
     }
     return false;
@@ -60,15 +80,24 @@ class Board extends React.Component {
   jumpOverPiece(i, j) {
     let dir = this.state.turn === "B" ? -1 : 1;
 
-    if (!((i - j) % 2 === 0) & !this.state.pieces[i][Math.floor(j / 2)] & i === this.state.selected[0] + (2 * dir)) {
+    if (!((i - j) % 2 === 0) & !this.state.pieces[i][Math.floor(j / 2)]) {
       let piece = this.state.pieces[this.state.selected[0]][Math.floor(this.state.selected[1] / 2)];
       let other_piece = piece === 'B' ? 'R' : 'B';
-      if (j === this.state.selected[1] + 2 & this.state.pieces[i - dir][Math.floor((j - 1) / 2)] === other_piece) {
-        return [i - dir, j - 1];
-      } else if (j === this.state.selected[1] - 2 & this.state.pieces[i - dir][Math.floor((j + 1) / 2)] === other_piece) {
-        return [i - dir, j + 1];
+      if (i === this.state.selected[0] + (2 * dir)) {
+        if (j === this.state.selected[1] + 2 & this.state.pieces[i - dir][Math.floor((j - 1) / 2)] === other_piece) {
+          return [i - dir, j - 1];
+        } else if (j === this.state.selected[1] - 2 & this.state.pieces[i - dir][Math.floor((j + 1) / 2)] === other_piece) {
+          return [i - dir, j + 1];
+        }
+      } else if (this.isKing(this.state.selected[0], Math.floor(this.state.selected[1] / 2)) !== -1 & 
+        i === this.state.selected[0] - (2 * dir)) {
+        if (j === this.state.selected[1] + 2 & this.state.pieces[i + dir][Math.floor((j - 1) / 2)] === other_piece) {
+          return [i + dir, j - 1];
+        } else if (j === this.state.selected[1] - 2 & this.state.pieces[i + dir][Math.floor((j + 1) / 2)] === other_piece) {
+          return [i + dir, j + 1];
+        }
+        return null;
       }
-      return null;
     }
     return null
   }
@@ -80,17 +109,35 @@ class Board extends React.Component {
     let i = this.state.selected[0];
     let j = this.state.selected[1];
 
-    if ([0, 1].includes(i)) {
-      return false;
-    }
-
     let piece = this.state.pieces[i][Math.floor(j / 2)];
     let other_piece = piece === 'B' ? 'R' : 'B';
+    let isKing = this.isKing(this.state.selected[0], Math.floor(this.state.selected[1] / 2)) !== -1;
 
-    let canJumpOverLeftPiece = this.state.pieces[i + dir][Math.floor((j - 1) / 2)] === other_piece & this.state.pieces[i + (2 * dir)][Math.floor((j - 2) / 2)] === null;
-    let canJumpOverRightPiece = this.state.pieces[i + dir][Math.floor((j + 1) / 2)] === other_piece & this.state.pieces[i + (2 * dir)][Math.floor((j + 2) / 2)] === null;
-  
-    return canJumpOverLeftPiece || canJumpOverRightPiece;
+    if (![0, 1].includes(j)) {
+      if ((i + 2 * dir) <= 7 & (i + 2 * dir) >= 0) {
+        if (this.state.pieces[i + dir][Math.floor((j - 1) / 2)] === other_piece & this.state.pieces[i + (2 * dir)][Math.floor((j - 2) / 2)] === null) {
+          return true;
+        }
+      }
+      if (isKing & (i - 2 * dir) <= 7 & (i - 2 * dir) >= 0) {
+        if (this.state.pieces[i - dir][Math.floor((j - 1) / 2)] === other_piece & this.state.pieces[i - (2 * dir)][Math.floor((j - 2) / 2)] === null) {
+          return true;
+        }
+      }
+    }
+    if (![6, 7].includes(j)) {
+      if ((i + 2 * dir) <= 7 & (i + 2 * dir) >= 0) {
+        if (this.state.pieces[i + dir][Math.floor((j + 1) / 2)] === other_piece & this.state.pieces[i + (2 * dir)][Math.floor((j + 2) / 2)] === null) {
+          return true;
+        }
+      }
+      if (isKing & (i - 2 * dir) <= 7 & (i - 2 * dir) >= 0) {
+        if (this.state.pieces[i - dir][Math.floor((j + 1) / 2)] === other_piece & this.state.pieces[i - (2 * dir)][Math.floor((j + 2) / 2)] === null) {
+          return true;
+        }
+      }
+    }
+    return false;
 
   }
 
@@ -118,10 +165,20 @@ class Board extends React.Component {
         row[Math.floor(j / 2)] = piece;
         pieces[i] = row;
 
+        let kings = this.state.kings;
+
+        if (this.isKing(this.state.selected[0], Math.floor(this.state.selected[1] / 2)) !== -1) {
+          kings.splice(this.isKing(this.state.selected[0], Math.floor(this.state.selected[1] / 2)), 1);
+          kings.push([i, Math.floor(j / 2)]);
+        } else if ((piece === "B" & i === 0) || (piece === "R" & i === 7)) {
+          kings.push([i, Math.floor(j / 2)]);
+        }
+
         this.setState({
           pieces: pieces,
           selected: null,
-          turn: this.state.turn === "B" ? "R" : "B"
+          turn: this.state.turn === "B" ? "R" : "B",
+          kings: kings
         });
 
       } else if (this.jumpOverPiece(i, j)) {
@@ -135,9 +192,19 @@ class Board extends React.Component {
         pieces[i] = row;
         pieces[jumpedOverPiece[0]][Math.floor(jumpedOverPiece[1] / 2)] = null;
 
+        let kings = this.state.kings;
+        
+        if (this.isKing(this.state.selected[0], Math.floor(this.state.selected[1] / 2)) !== -1) {
+          kings.splice(this.isKing(this.state.selected[0], Math.floor(this.state.selected[1] / 2)), 1);
+          kings.push([i, Math.floor(j / 2)]);
+        } else if ((piece === "B" & i === 0) || (piece === "R" & i === 7)) {
+          kings.push([i, Math.floor(j / 2)]);
+        }
+
         this.setState({
           pieces: pieces,
-          selected: [i, j]
+          selected: [i, j],
+          kings: kings
         }, () => {
           if (this.canJumpOverPiece()) {
             this.setState({
@@ -223,7 +290,7 @@ class Board extends React.Component {
               rows[i][2 * j + 1],
               {
                 pieceColor: " red-piece",
-                piece: "O"
+                piece: this.isKing(i, j) !== -1 ? "K" : "O"
               }
             )
           } else {
@@ -231,7 +298,7 @@ class Board extends React.Component {
               rows[i][2 * j],
               {
                 pieceColor: " red-piece",
-                piece: "O"
+                piece: this.isKing(i, j) !== -1 ? "K" : "O"
               }
             )
           }
@@ -241,7 +308,7 @@ class Board extends React.Component {
               rows[i][2 * j + 1],
               {
                 pieceColor: " black-piece",
-                piece: "O"
+                piece: this.isKing(i, j) !== -1 ? "K" : "O"
               }
             )
           } else {
@@ -249,7 +316,7 @@ class Board extends React.Component {
               rows[i][2 * j],
               {
                 pieceColor: " black-piece",
-                piece: "O"
+                piece: this.isKing(i, j) !== -1 ? "K" : "O"
               }
             )
           }
