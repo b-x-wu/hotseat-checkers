@@ -54,12 +54,15 @@ class Board extends React.Component {
         (this.state.selected[1] - 1 === j) || 
         (this.state.selected[1] + 1 === j)
       )) {
+        console.log('block 1');
         return true;
-      } else if (this.isKing(this.state.selected[0], Math.floor(this.state.selected[1] / 2) !== -1) & 
+      } 
+      if (this.isKing(this.state.selected[0], Math.floor(this.state.selected[1] / 2)) !== -1 & 
         (this.state.selected[0] - dir === i & (
         (this.state.selected[1] - 1 === j) || 
         (this.state.selected[1] + 1 === j)
       ))) {
+        console.log('block 2');
         return true;
       }
 
